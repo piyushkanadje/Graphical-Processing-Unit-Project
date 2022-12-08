@@ -1,54 +1,9 @@
-/*********************
-MIT License
-
-Copyright (c) 2020 Matzoros Christos
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-***********************/
-
-/*********************
-The purpose of this code is to execute multi-GPU matrix multiplication with multiple kernel 
-invocations using streams. The program split the computation into 4 individual computations 
-as it is shown below. The proportion of the size of the block is variable.
-  
-  ------------------------------------------------
-    A * B = C   
-
-    |  A1  |     |    |    |       C1 | C2
-    -------- *   | B1 | B2 |   =   -------
-    |  A2  |     |    |    |       C3 | C4 
-  
-    A1 * B1 = C1
-    A1 * B2 = c2
-    A2 * B1 = C3
-    A2 * B2 = C4
-    
-    These 4 computations may take place simultaneously on 4 different GPUs.
-  ------------------------------------------------
-
-***********************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include "kernel.cu"
 // CUDA runtime
 //#include <cuda_runtime.h>
 
@@ -73,86 +28,7 @@ as it is shown below. The proportion of the size of the block is variable.
 }
 
 
-//general kernel(not used)
-__global__ void matrix_multiplication(double *A,double *B,double *C,int width){
-    int idy = blockIdx.y*blockDim.y+threadIdx.y;
-    int idx = blockIdx.x*blockDim.x+threadIdx.x;
-    
-    int step;
-    double prod_val = 0;
-    if((idy>=width)||((idx>=width))) return;
-    
-    for(step=0;step<width;step++){
-        prod_val += A[idy*width+step] * B[step*width+idx];
-    }
-    
-    C[idy*width+idx] = prod_val;
-}
 
-// Kernel for the computation of C1 portion
-__global__ void kernelC1(double *A,double *B,double *C,int width, double r){
-    int idy = blockIdx.y*blockDim.y+threadIdx.y;
-    int idx = blockIdx.x*blockDim.x+threadIdx.x;
-    int step;
-    double prod_val = 0;
-    
-    if((idy>=(int)(width*r))||(idx>=(int)(width*r))) return;
-    
-    for(step=0;step<width;step++){
-        prod_val += A[idy*width+step] * B[step*(int)(width*r)+idx];
-    }
-    
-    C[idy*(int)(width*r)+idx] = prod_val;
-}
-
-// Kernel for the computation of C2 portion
-__global__ void kernelC2(double *A,double *B,double *C,int width, double r){
-    int idy = blockIdx.y*blockDim.y+threadIdx.y;
-    int idx = blockIdx.x*blockDim.x+threadIdx.x;
-    int step;
-    double prod_val = 0;
-    
-    if((idy>=(int)(width*r))||(idx>=(int)(width*(1-r)))) return;
-    
-    for(step=0;step<width;step++){
-        prod_val += A[idy*width+step] * B[step*(int)(width*(1-r))+idx];
-    }
-    
-    C[idy*(int)(width*(1-r))+idx] = prod_val;
-}
-
-
-// Kernel for the computation of C3 portion
-__global__ void kernelC3(double *A,double *B,double *C,int width, double r){
-    int idy = blockIdx.y*blockDim.y+threadIdx.y;
-    int idx = blockIdx.x*blockDim.x+threadIdx.x;
-    
-    int step;
-    double prod_val = 0;
-    if((idy>=(int)(width*(1-r)))||(idx>=(int)(width*r))) return;
-    
-    for(step=0;step<width;step++){
-        prod_val += A[idy*width+step] * B[step*(int)(width*r)+idx];
-    }
-    
-    
-    C[idy*(int)(width*r)+idx] = prod_val;
-}
-
-// // Kernel for the computation of C4 portion
-__global__ void kernelC4(double *A,double *B,double *C,int width, double r){
-    int idy = blockIdx.y*blockDim.y+threadIdx.y;
-    int idx = blockIdx.x*blockDim.x+threadIdx.x;
-    
-    int step;
-    double prod_val = 0;
-    if((idy>=(int)(width*(1-r)))||(idx>=(int)(width*(1-r)))) return;
-    
-    for(step=0;step<width;step++){
-        prod_val += A[idy*width+step] * B[step*(int)(width*(1-r))+idx];
-    }
-    C[idy*(int)(width*(1-r))+idx] = prod_val;
-}
 
 
 
