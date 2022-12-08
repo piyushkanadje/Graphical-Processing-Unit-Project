@@ -6,7 +6,7 @@ NVCC_FLAGS  = -O3 --std=c++03
 endif
 LD_FLAGS    = -lcudart
 EXE	        = multipleGpu 
-OBJ	        = main.o support.o
+OBJ	        = main.o 
 
 default: $(EXE)
 
