@@ -4,6 +4,9 @@
 #include <unistd.h>
 #include <time.h>
 #include "kernel.cu"
+#include "support.h"
+#include "support.cu"
+
 // CUDA runtime
 //#include <cuda_runtime.h>
 
