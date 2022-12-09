@@ -148,7 +148,7 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A1_2,(int)(N*N*r*sizeof(double)));
     cudaMalloc((void**)&d_B2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_C2,(int)(N*N*r*r_1*sizeof(double)));
- stopTime(&timer); 
+
     printf("Allocating Kernel 2...%f s\n", elapsedTime(timer));  //timer ends here
         
     /******************************/
@@ -171,7 +171,7 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_B1_2,(int)(N*N*r*sizeof(double)));
     cudaMalloc((void**)&d_C3,(int)(N*N*r*r_1*sizeof(double))); 
- stopTime(&timer); 
+
     printf("Allocating Kernel 3...%f s\n", elapsedTime(timer));  //timer ends here
         
     /******************************/
@@ -187,7 +187,7 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A2_2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_B2_2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_C4,(int)(N*N*r_1*r_1*sizeof(double)));
- stopTime(&timer); 
+
     printf("Allocating Kernel 4...%f s\n", elapsedTime(timer));  //timer ends here
         
 
@@ -211,7 +211,6 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here      
     kernelC1 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A1,d_B1,d_C1,N,r);
-     stopTime(&timer); 
     printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
 
     
@@ -246,7 +245,6 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here
     kernelC3 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A2,d_B1_2,d_C3,N,r);
-     stopTime(&timer); 
     printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
     
 
@@ -264,7 +262,6 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here
     kernelC4 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A2_2,d_B2_2,d_C4,N,r);
-     stopTime(&timer); 
     printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
 
 
@@ -279,7 +276,7 @@ int main(int argc,char *argv[]){
     cudaMemcpyAsync(h_C3,d_C3,(int)(N*N*r*r_1*sizeof(double)),cudaMemcpyDeviceToHost,streams[id]);
    
     cudaMemcpyAsync(h_C4,d_C4,(int)(N*N*r_1*r_1*sizeof(double)),cudaMemcpyDeviceToHost,streams[id]);
- stopTime(&timer); 
+
     printf("\nCopying data from devices to host...%f s\n", elapsedTime(timer));
    
     
@@ -343,7 +340,7 @@ int main(int argc,char *argv[]){
        // printf("\n");
     }
     //  printf("\n"); 
-     stopTime(&timer); 
+    
     printf("\nBuilding final matrix from blocks...%f s\n", elapsedTime(timer));
 
     /******************************/
