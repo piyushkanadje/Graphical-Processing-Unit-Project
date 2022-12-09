@@ -5,7 +5,7 @@ else
 NVCC_FLAGS  = -O3 --std=c++03
 endif
 LD_FLAGS    = -lcudart
-EXE	        = multipleGpu
+EXE	        = sgemm-tiled
 OBJ	        = main.o support.o
 
 default: $(EXE)
