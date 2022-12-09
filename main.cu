@@ -25,6 +25,8 @@ These 4 individual computations take place simultaneously on different GPUs.
 /******************************/
 //main function
 int main(int argc,char *argv[]){
+
+
     // Setup Timer for checking execution times
     Timer timer;
     //cudaError_t cuda_ret;
@@ -65,17 +67,18 @@ int main(int argc,char *argv[]){
     // Get number of GPU Devices
     cudaGetDeviceCount(&ndev);
     if(ndev==0){
-        printf("NO GPU DEVICES AVAILABLE\n\n");
+        printf(" GPU DEVICES ARE UNAVAILABLE\n\n");
         exit(-1);
             
     }else{
-        printf("\nNumber of available GPUs: %d\n",ndev);
+        printf("\nAvailable Number of GPU: %d\n",ndev);
     }
         
     // Allocate Host variables
-    // and fill matrices A & B with random values
-    // and fill matrix C with zeroes
+    //  fill matrices A & B with random values
+    //  fill matrix C with zeroes
     cudaMallocHost(&h_A,N*N*sizeof(double));
+
     for (unsigned int i=0; i < N*N; i++) { 
         h_A[i] = (rand()%100)/100.00; 
     }
@@ -90,24 +93,24 @@ int main(int argc,char *argv[]){
         h_C[i] = 0; 
     }
     stopTime(&timer); 
-    printf("\nSetting up the problem...%f s\n", elapsedTime(timer));
+    printf("\n Time For Setting Up %f s\n", elapsedTime(timer));
     printf("    A: %d x %d, %d elements\n    B: %d x %d, %d elements\n    C: %d x %d, %d elements\n", 
         N, N, N*N, N, N, N*N, N, N, N*N);
-    printf("\nBlock 1 width: %d\n",(int)(N*r));
-    printf("Block 2 width: %d\n",(int)(N*r_1));
+    printf("\nWidth Of Block 1: %d\n",(int)(N*r));
+    printf("Width Of Block 2: %d\n",(int)(N*r_1));
     
         
-    /******************************/
-    // kernel 1 allocate
+/******************************/
+//Allocation Of Kernel 2
+
     startTime(&timer); //timer starts here
     id=0;
     cudaSetDevice((int)(id%ndev));
-    //cudaStreamCreate(&streams[id]);
     cudaStreamCreateWithFlags(&streams[id],cudaStreamNonBlocking);
     
-    cudaMallocHost(&h_A1,(int)(N*N*r*sizeof(double)));
-    cudaMallocHost(&h_B1,(int)(N*N*r*sizeof(double)));
-    cudaMallocHost(&h_C1,(int)(N*N*r*r*sizeof(double)));
+    cudaMallocManaged(&h_A1,(int)(N*N*r*sizeof(double)));
+    cudaMallocManaged(&h_B1,(int)(N*N*r*sizeof(double)));
+    cudaMallocManaged(&h_C1,(int)(N*N*r*r*sizeof(double)));
     
     for(int i=0;i<(int)(N*r);i++){
         for(int j=0;j<N;j++){
@@ -125,14 +128,15 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_C1,(int)(N*N*r*r*sizeof(double)));
 
     stopTime(&timer);
-    printf("\nAllocating Kernel 1...%f s\n", elapsedTime(timer));  //timer ends here
-        
-    /******************************/
-    // kernel 2
+    printf("\n Allocating the parts of data to Kernel 1....%f s\n", elapsedTime(timer));  //timer ends here
+
+
+ /******************************/
+ //Allocation For Kernel 2...
+
     startTime(&timer); //timer starts here
     id=1;
     cudaSetDevice((int)(id%ndev));
-    //cudaStreamCreate(&streams[id]);
     cudaStreamCreateWithFlags(&streams[id],cudaStreamNonBlocking);
     
     cudaMallocHost(&h_B2,(int)(N*N*r_1*sizeof(double)));
@@ -148,15 +152,15 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A1_2,(int)(N*N*r*sizeof(double)));
     cudaMalloc((void**)&d_B2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_C2,(int)(N*N*r*r_1*sizeof(double)));
-
-    printf("Allocating Kernel 2...%f s\n", elapsedTime(timer));  //timer ends here
+ stopTime(&timer);
+    printf("Allocating the parts of data to Kernel 2....%f s\n", elapsedTime(timer));  //timer ends here
         
     /******************************/
-    // kernel 3
+    // Allocation for Kernel 3......
+
     startTime(&timer); //timer starts here
     id=2;
     cudaSetDevice(id%ndev);
-    //cudaStreamCreate(&streams[id]);
     cudaStreamCreateWithFlags(&streams[id],cudaStreamNonBlocking);
     
     cudaMallocHost(&h_A2,(int)(N*N*r_1*sizeof(double)));
@@ -171,11 +175,11 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_B1_2,(int)(N*N*r*sizeof(double)));
     cudaMalloc((void**)&d_C3,(int)(N*N*r*r_1*sizeof(double))); 
-
-    printf("Allocating Kernel 3...%f s\n", elapsedTime(timer));  //timer ends here
+ stopTime(&timer);
+    printf("Allocating the parts of data to Kernel 3....%f s\n", elapsedTime(timer));  //timer ends here
         
     /******************************/
-    // kernel 4
+    // Allocation for kernel 3......
     startTime(&timer); //timer starts here
     id=3;
     cudaSetDevice(id%ndev);
@@ -187,8 +191,8 @@ int main(int argc,char *argv[]){
     cudaMalloc((void**)&d_A2_2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_B2_2,(int)(N*N*r_1*sizeof(double)));
     cudaMalloc((void**)&d_C4,(int)(N*N*r_1*r_1*sizeof(double)));
-
-    printf("Allocating Kernel 4...%f s\n", elapsedTime(timer));  //timer ends here
+ stopTime(&timer);
+    printf("Allocating the parts of data to Kernel 4....%f s\n", elapsedTime(timer));  //timer ends here
         
 
     /******************************/
@@ -211,7 +215,8 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here      
     kernelC1 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A1,d_B1,d_C1,N,r);
-    printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
+     stopTime(&timer);
+    printf("Execution Of Kernel%d...%f s\n", id+1, elapsedTime(timer));
 
     
     startTime(&timer); //timer starts here
@@ -228,7 +233,8 @@ int main(int argc,char *argv[]){
     
     startTime(&timer); //timer starts here
     kernelC2 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A1_2,d_B2,d_C2,N,r);
-    printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
+     stopTime(&timer);
+    printf("Execution Of Kernel   %d...%f s\n", id+1, elapsedTime(timer));
 
     
     startTime(&timer); //timer starts here
@@ -245,7 +251,8 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here
     kernelC3 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A2,d_B1_2,d_C3,N,r);
-    printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
+     stopTime(&timer);
+    printf("Execution Of Kernel %d...%f s\n", id+1, elapsedTime(timer));
     
 
     startTime(&timer); //timer starts here
@@ -262,7 +269,8 @@ int main(int argc,char *argv[]){
 
     startTime(&timer); //timer starts here
     kernelC4 <<< dimGrid,dimBlock,0,streams[id]>>>(d_A2_2,d_B2_2,d_C4,N,r);
-    printf("Executing kernel %d...%f s\n", id+1, elapsedTime(timer));
+     stopTime(&timer);
+    printf("Execution Of Kernel %d...%f s\n", id+1, elapsedTime(timer));
 
 
     /******************************/
@@ -276,7 +284,7 @@ int main(int argc,char *argv[]){
     cudaMemcpyAsync(h_C3,d_C3,(int)(N*N*r*r_1*sizeof(double)),cudaMemcpyDeviceToHost,streams[id]);
    
     cudaMemcpyAsync(h_C4,d_C4,(int)(N*N*r_1*r_1*sizeof(double)),cudaMemcpyDeviceToHost,streams[id]);
-
+ stopTime(&timer);
     printf("\nCopying data from devices to host...%f s\n", elapsedTime(timer));
    
     
@@ -301,53 +309,46 @@ int main(int argc,char *argv[]){
 
     /******************************/
     //build the final Matrix from blocks
+
+    printf("Building The Final Matrix from Block");
     startTime(&timer); //timer starts here
 
     for(i=0;i<(int)N*r;i++){
         for(j=0;j<(int)N*r;j++){
               h_C[i*N+j] = h_C1[i*(int)(N*r)+j];
-              //printf("h_C[%d]:%f ",i*N+j,h_C[i*N+j]);
         }
-        //printf("\n");
     }
-    //printf("\n");
+  
     
     
     for(i=0;i<(int)N*r;i++){
         for(j=0;j<(int)(N*r_1);j++){
              h_C[i*N+j+(int)(N*r)] = h_C2[i*(int)(N*r_1)+j];
-             //printf("h_C[%d]:%f",i*N+j+(int)(N*r),h_C[i*N+j+(int)(N*r)]);
         }
-        //printf("\n");
     }
-    //printf("\n");
+  
     
     for(i=0;i<(int)(N*r_1);i++){
         for(j=0;j<(int)(N*r);j++){
-             h_C[(i+(int)(N*r))*N+j] = h_C3[i*(int)(N*r)+j];
-             //printf("h_C[%d]:%f",(i+(int)(N*r))*N+j,h_C[(i+(int)(N*r))*N+j]);
+             h_C[(i+(int)(N*r))*N+j] = h_C3[i*(int)(N*r)+j];     
         }
-        //printf("\n");
     }
-    //printf("\n"); 
+ 
     
   
     for(i=0;i<(int)(N*r_1);i++){
         for(j=0;j<(int)(N*r_1);j++){
             h_C[(i+(int)(N*r))*N+j+(int)(N*r)] = h_C4[i*(int)(N*r_1)+j];
-          //  printf("h_C[%d]:%f",(i+(int)(N*r))*N+j+(int)(N*r),h_C[(i+(int)(N*r))*N+j+(int)(N*r)]);
-        }
-       // printf("\n");
-    }
-    //  printf("\n"); 
-    
+        } 
+    } 
+     stopTime(&timer);
     printf("\nBuilding final matrix from blocks...%f s\n", elapsedTime(timer));
 
     /******************************/
     // validate results by calculating on cpu
     fflush(stdout);
     startTime(&timer);
-    verify(h_A, h_B, h_C, N);
+    resultVerify(h_A, h_B, h_C, N);
     stopTime(&timer); 
     printf("\nVerifying results...%f s\n", elapsedTime(timer));
     
