@@ -11,8 +11,7 @@ typedef struct {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void verify(double *A, double *B, double *C,
-   int N);
+void verify(double *A, double *B, double *C,int N);
 void startTime(Timer* timer);
 void stopTime(Timer* timer);
 float elapsedTime(Timer timer);

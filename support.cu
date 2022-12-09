@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 #include "support.h"
 
 void verify(double *A, double *B, double *C,

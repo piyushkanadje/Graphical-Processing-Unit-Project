@@ -1,6 +1,8 @@
 #include <stdio.h>
-#include "support.h"
-#include "support.cu"
+#include<stdlib.h>
+#include<unistd.h>
+#include <time.h>
+
 
 //general kernel(not used)
 __global__ void matrix_multiplication(double *A,double *B,double *C,int width){
